@@ -1,5 +1,11 @@
 var Game = {};
-
+var KEY_CODES = {
+  32: 'space',
+  37: 'left',
+  38: 'up',
+  39: 'right',
+  40: 'down',
+}
 Game.fps = 30;
 
 
@@ -7,40 +13,52 @@ Game.initialize = function() {
   this.entities = [];
   this.context = document.getElementById("canvas").getContext("2d");
 
-  // =====
-  // Example
-  this.rect_x = 0
-  this.rect_y = 0
-  // =====
+  this.car = new Image();
+  this.car.src = 'car.png';
+  this.context.drawImage(this.car, 0, 0); 
+  this.frameHeight = 600;
+  this.frameWidth = 800;
+  //numero de ciclos rodados do jogo
+  this.cycles = 0;
+
+  this.rect_x = this.frameWidth / 2;
+  this.rect_y = this.frameHeight;
+
+
 };
 
 
 Game.draw = function() {
-  this.context.clearRect(0, 0, 800, 600);
+  this.context.clearRect(0, 0, this.frameWidth, this.frameHeight);
 
+  var drawCar = function(){
+    //img
+    //x de corte
+    //y de corte
+    //largura da imagem
+    //altura da imagem
+    //x de onde colocar no canvas
+    //y ''
+    //largura da imagem final
+    //altura da imagem final
+    console.log(Math.ceil(this.cycles / 100));
+    this.context.drawImage(this.car, 93 * (Math.ceil(this.cycles) % 4), 0, 93, 141, this.rect_x, this.rect_x, 100, 150);
+  }
+  drawCar.apply(this);
   // Your code goes here
-
+ 
   // =====
   // Example
-  this.context.fillRect(this.rect_x, this.rect_y, 100, 100)
   //=====
 };
 
 
 Game.update = function() {
   // Your code goes here
-
+  this.cycles ++;
   // =====
   // Example
-  this.rect_x += 1
-  if (this.rect_x >= 800) {
-    this.rect_x = -100
-  }
-
-  this.rect_y += 1
-  if (this.rect_y >= 600) {
-    this.rect_y = -100
-  }
+  
   // =====
 };
 
