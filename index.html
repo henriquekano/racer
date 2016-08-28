@@ -1,57 +1,78 @@
 <!DOCTYPE html>
 
 <html>
-<body>
-
-<canvas id="canvas" width="800" height="600" style="border:1px solid #d3d3d3;"> Your browser does not support the HTML5 canvas tag.</canvas>
-<script src="game.js"></script>
-
-<script>
-    Game.initialize();
-
-    Game.run = (function() {
-        var loops = 0, skipTicks = 1000 / Game.fps,
-        maxFrameSkip = 10,
-        nextGameTick = (new Date).getTime();
-
-        return function() {
-            loops = 0;
-
-            while ((new Date).getTime() > nextGameTick) {
-                Game.update();
-                nextGameTick += skipTicks;
-                loops++;
+    <head>
+        <style type="text/css">
+            canvas {
+                position: absolute;
+                top: 0px;
+                left: 0px;
+                background: transparent;
             }
-            
-            Game.draw();
-        };
-    })();
-
-    (function() {
-        var onEachFrame;
-        if (window.webkitRequestAnimationFrame) {
-            onEachFrame = function(cb) {
-                var _cb = function() { cb(); webkitRequestAnimationFrame(_cb); }
-                _cb();
-            };
-        }
-        else if (window.mozRequestAnimationFrame) {
-                onEachFrame = function(cb) {
-                var _cb = function() { cb(); mozRequestAnimationFrame(_cb); }
-                _cb();
-            };
-        }
-        else {
-            onEachFrame = function(cb) {
-                setInterval(cb, 1000 / 60);
+            #car-canvas {
+                z-index: 2;
             }
-        }
+            #road-canvas {
+                z-index: 0;
+            }
+        </style>
+    </head>
+    <body>
 
-        window.onEachFrame = onEachFrame;
-    })();
+        <canvas id="car-canvas" width="800" height="600" style="border:1px solid #d3d3d3;"> 
+            Your browser does not support the HTML5 canvas tag.
+        </canvas>
+        <canvas id="road-canvas" width="800" height="600" style="border:1px solid #d3d3d3;"> 
+            Your browser does not support the HTML5 canvas tag.
+        </canvas>
+        <script src="game.js"></script>
 
-    window.onEachFrame(Game.run);
-  </script>
+        <script>
+            Game.initialize();
 
-</body>
+            Game.run = (function() {
+                var loops = 0, skipTicks = 1000 / Game.fps,
+                maxFrameSkip = 10,
+                nextGameTick = (new Date).getTime();
+
+                return function() {
+                    loops = 0;
+
+                    while ((new Date).getTime() > nextGameTick) {
+                        Game.update();
+                        nextGameTick += skipTicks;
+                        loops++;
+                    }
+                    
+                    Game.draw();
+                };
+            })();
+
+            (function() {
+                var onEachFrame;
+                if (window.webkitRequestAnimationFrame) {
+                    onEachFrame = function(cb) {
+                        var _cb = function() { cb(); webkitRequestAnimationFrame(_cb); }
+                        _cb();
+                    };
+                }
+                else if (window.mozRequestAnimationFrame) {
+                        onEachFrame = function(cb) {
+                        var _cb = function() { cb(); mozRequestAnimationFrame(_cb); }
+                        _cb();
+                    };
+                }
+                else {
+                    onEachFrame = function(cb) {
+                        setInterval(cb, 1000 / 60);
+                    }
+                }
+
+                window.onEachFrame = onEachFrame;
+            })();
+
+            window.onEachFrame(Game.run);
+        </script>
+
+    </body>
 </html>
