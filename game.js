@@ -16,12 +16,53 @@ var ObstacleFactory = {
     };
     this.hole.image = new Image();
     this.hole.image.src = 'hole.png';
+
+    this.otherCar = {
+      width: 93,
+      height: 141,
+      sideEffect: function(carObject){
+        carObject.carStatus.destroyed = true;
+      }
+    };
+    this.otherCar.image = new Image();
+    this.otherCar.image.src = 'otherCar.png';
+
+    this.oilSpill = {
+      width: 80,
+      height: 80,
+      sideEffect: function(){
+
+      }
+    };
+    this.oilSpill.image = new Image();
+    this.oilSpill.image.src = 'oilSpill.png';
   },
-  createObstacle: function(){
-    var obstacle = Object.create(this.hole);
-    obstacle.x = 0;
+  createObstacle: function(lane1MiddleX, lane2MiddleX, lane3MiddleX, lane4MiddleX){
+    var randomLane = Math.floor((Math.random() * 4) + 1);
+    var randomObstacle = Math.floor((Math.random() * 3) + 1);
+
+    var obstacle;
+    if(randomObstacle === 1){
+      obstacle = Object.create(this.hole);
+    }else if(randomObstacle === 2){
+      obstacle = Object.create(this.otherCar);
+    }else if(randomObstacle === 3){
+      obstacle = Object.create(this.oilSpill);
+    }
+
+    if(randomLane === 1){
+      obstacle.x = lane1MiddleX - obstacle.width / 2;
+    }else if(randomLane === 2){
+      obstacle.x = lane2MiddleX - obstacle.width / 2;
+    }else if(randomLane === 3){
+      obstacle.x = lane3MiddleX - obstacle.width / 2;
+    }else if(randomLane === 4){
+      obstacle.x = lane4MiddleX - obstacle.width / 2;
+    }
+    
     obstacle.y = -obstacle.height;
     return obstacle;
+    
   }
 };
 
@@ -40,6 +81,10 @@ Road.initRoad = function(){
     width: 800
   };
   this.background.image.src = 'background.png';
+  this.lane1MiddleX = 80;
+  this.lane2MiddleX = 291;
+  this.lane3MiddleX = 507;
+  this.lane4MiddleX = 713;
 };
 Road.updateRoad = function(cycles, frameHeight, frameWidth){
   //Aumenta a velocidade
@@ -66,7 +111,7 @@ Road.updateRoad = function(cycles, frameHeight, frameWidth){
   }
   //summon um se precisar obstaculo
   if(cycles % 100 == 0){
-    var newObs = this.createObstacle();
+    var newObs = this.createObstacle(this.lane1MiddleX, this.lane2MiddleX, this.lane3MiddleX, this.lane4MiddleX);
     this.obstacles.push(newObs);
   }
 };
@@ -96,6 +141,11 @@ Car.initCar = function(frameHeight, frameWidth){
     38: 'up',
     39: 'right',
     40: 'down',
+  };
+  this.carStatus = {
+    oilSlide: false,
+    invincible: false,
+    destroyed: false
   };
   this.carHeight = 141;
   this.carWidth = 93;   
@@ -164,6 +214,7 @@ Car.moveCar = function(frameHeight, frameWidth){
 Car.collision = function(obstacles){
   for(var i = 0; i < obstacles.length; i++){
     var obstacle = obstacles[i];
+    //if collision
     if(!(this.x > obstacle.x + obstacle.width ||
       this.x + this.width < obstacle.x ||
       this.y > obstacle.y + obstacle.height ||
@@ -224,4 +275,8 @@ Game.update = function() {
     this.obstacles);
 
   this.updateRoad(this.cycles, this.frameHeight, this.frameWidth);
+};
+
+Game.end = function(){
+  return this.carStatus.destroyed === true;
 };
