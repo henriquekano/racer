@@ -12,8 +12,16 @@
             #car-canvas {
                 z-index: 2;
             }
+            #obstacles-canvas{
+                z-index: 1;
+            }
             #road-canvas {
                 z-index: 0;
+            }
+            .score{
+                position: absolute;
+                top: 600px;
+                left: 0px;
             }
         </style>
     </head>
@@ -22,10 +30,13 @@
         <canvas id="car-canvas" width="800" height="600" style="border:1px solid #d3d3d3;"> 
             Your browser does not support the HTML5 canvas tag.
         </canvas>
+        <canvas id="obstacles-canvas" width="800" height="600" style="border:1px solid #d3d3d3;"> 
+            Your browser does not support the HTML5 canvas tag.
+        </canvas>
         <canvas id="road-canvas" width="800" height="600" style="border:1px solid #d3d3d3;"> 
             Your browser does not support the HTML5 canvas tag.
         </canvas>
-        <div>SCORE: <span id="score"><span></div>
+        <div class="score">SCORE: <span id="score"><span></div>
         <script src="game.js"></script>
         <script>
             Game.initialize();

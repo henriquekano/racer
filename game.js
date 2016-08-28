@@ -11,7 +11,7 @@ var ObstacleFactory = {
       width: 75,
       height: 75,
       sideEffect: function(scoreObject){
-        scoreObject.score -= 10;
+        scoreObject.score -= 100;
       }
     };
     this.hole.image = new Image();
@@ -32,6 +32,14 @@ Road.initRoad = function(){
   this.velocityAdd = 2;
   this.obstacles = [];
   this.initObstacleFactory();
+  this.background = {
+    image: new Image(),
+    x: 0,
+    y: 0,
+    height: 600,
+    width: 800
+  };
+  this.background.image.src = 'background.png';
 };
 Road.updateRoad = function(cycles, frameHeight, frameWidth){
   //Aumenta a velocidade
@@ -39,6 +47,11 @@ Road.updateRoad = function(cycles, frameHeight, frameWidth){
     this.velocity += this.velocityAdd;
   }
 
+  //update background
+  this.background.y += this.velocity;
+  if (this.background.y >= frameHeight){
+    this.background.y = 0;
+  }
   
   for(var i = 0; i < this.obstacles.length; i++){
 
@@ -57,11 +70,14 @@ Road.updateRoad = function(cycles, frameHeight, frameWidth){
     this.obstacles.push(newObs);
   }
 };
-Road.drawRoad = function(context){
+Road.drawRoad = function(obstaclesContext, backgroundContext, frameHeight){
+
+  backgroundContext.drawImage(this.background.image, this.background.x, this.background.y);
+  backgroundContext.drawImage(this.background.image, this.background.x, this.background.y - this.background.height);
 
   for(var i = 0; i < this.obstacles.length; i++){
     var obs = this.obstacles[i];
-    context.drawImage(
+    obstaclesContext.drawImage(
       obs.image, obs.x, obs.y, obs.width, obs.height
     );
   }
@@ -119,7 +135,7 @@ Car.drawCar = function(context, cycles){
 
   context.drawImage(
     this.image, this.carWidth * (Math.ceil(cycles) % 4), 
-    0, this.carWidth, 141, this.x, this.y, this.carWidth, 141);
+    0, this.carWidth, this.carHeight, this.x, this.y, this.carWidth, this.carHeight);
 };
 Car.moveCar = function(frameHeight, frameWidth){
   var newX = this.x + (this.pressedKeys.right ? this.velocityX : 0) - (this.pressedKeys.left ? this.velocityX : 0);
@@ -152,7 +168,6 @@ Car.collision = function(obstacles){
       this.x + this.width < obstacle.x ||
       this.y > obstacle.y + obstacle.height ||
       this.height + this.y < obstacle.y)) {
-      console.log("Colision");
       obstacle.sideEffect(this);
     }
   }
@@ -172,8 +187,9 @@ Game.fps = 30;
 
 Game.initialize = function() {
   this.carContext = document.getElementById("car-canvas").getContext("2d");
+  this.obstaclesContext = document.getElementById("obstacles-canvas").getContext("2d");
   this.roadContext = document.getElementById("road-canvas").getContext("2d");
-  
+
   this.frameHeight = 600;
   this.frameWidth = 800;
   this.initCar(this.frameHeight, this.frameWidth);
@@ -187,11 +203,12 @@ Game.initialize = function() {
 
 Game.draw = function() {
   this.carContext.clearRect(0, 0, this.frameWidth, this.frameHeight);
+  this.obstaclesContext.clearRect(0, 0, this.frameWidth, this.frameHeight);
   this.roadContext.clearRect(0, 0, this.frameWidth, this.frameHeight);
 
   this.drawCar(this.carContext, this.cycles);
 
-  this.drawRoad(this.roadContext);
+  this.drawRoad(this.obstaclesContext, this.roadContext, this.frameHeight);
 
   document.getElementById("score").innerHTML = Math.ceil(this.score / 20);
 };
