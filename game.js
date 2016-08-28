@@ -9,7 +9,10 @@ var ObstacleFactory = {
   initObstacleFactory: function(){
     this.hole = {
       width: 75,
-      height: 75
+      height: 75,
+      sideEffect: function(scoreObject){
+        scoreObject.score -= 10;
+      }
     };
     this.hole.image = new Image();
     this.hole.image.src = 'hole.png';
@@ -84,8 +87,8 @@ Car.initCar = function(frameHeight, frameWidth){
   this.velocityY = 10;
   this.image = new Image();
   this.image.src = 'car.png';
-  this.rect_x = frameWidth / 2;
-  this.rect_y = frameHeight - this.carWidth;
+  this.x = frameWidth / 2;
+  this.y = frameHeight - this.carWidth;
   var onkeydown = function(e) {
     var keyCode = e.keyCode;
     if (this.INPUT_DICT[keyCode]) {
@@ -102,7 +105,7 @@ Car.initCar = function(frameHeight, frameWidth){
   }
   document.addEventListener("keydown", bind(this, onkeydown), false);
   document.addEventListener("keyup", bind(this, onkeyup), false);
-}
+};
 Car.drawCar = function(context, cycles){
   //img
   //x de corte
@@ -116,33 +119,49 @@ Car.drawCar = function(context, cycles){
 
   context.drawImage(
     this.image, this.carWidth * (Math.ceil(cycles) % 4), 
-    0, this.carWidth, 141, this.rect_x, this.rect_y, this.carWidth, 141);
-}
+    0, this.carWidth, 141, this.x, this.y, this.carWidth, 141);
+};
 Car.moveCar = function(frameHeight, frameWidth){
-  var newX = this.rect_x + (this.pressedKeys.right ? this.velocityX : 0) - (this.pressedKeys.left ? this.velocityX : 0);
-  var newY = this.rect_y + (this.pressedKeys.down ? this.velocityY : 0) - (this.pressedKeys.up ? this.velocityY : 0);
+  var newX = this.x + (this.pressedKeys.right ? this.velocityX : 0) - (this.pressedKeys.left ? this.velocityX : 0);
+  var newY = this.y + (this.pressedKeys.down ? this.velocityY : 0) - (this.pressedKeys.up ? this.velocityY : 0);
 
   //Ta saindo da tela!!
   if(newX > frameWidth - this.carWidth){
-    this.rect_x = frameWidth - this.carWidth;
+    this.x = frameWidth - this.carWidth;
   }else if(newX < 0){
-    this.rect_x = 0;
+    this.x = 0;
   }else{
-    this.rect_x = newX;
+    this.x = newX;
   }
 
   
   if(newY > frameHeight - this.carHeight){
     //ta saindo da tela por baixo!
-    this.rect_y = frameHeight - this.carHeight;
+    this.y = frameHeight - this.carHeight;
   }else if(newY < 0){
     //ta saindo da tela por cima!
-    this.rect_y = 0;
+    this.y = 0;
   }else{
-    this.rect_y = newY;
+    this.y = newY;
   }
-}
-
+};
+Car.collision = function(obstacles){
+  for(var i = 0; i < obstacles.length; i++){
+    var obstacle = obstacles[i];
+    if(!(this.x > obstacle.x + obstacle.width ||
+      this.x + this.width < obstacle.x ||
+      this.y > obstacle.y + obstacle.height ||
+      this.height + this.y < obstacle.y)) {
+      console.log("Colision");
+      obstacle.sideEffect(this);
+    }
+  }
+  
+};
+Car.updateCar = function(frameHeight, frameWidth, obstacles){
+  this.moveCar(frameHeight, frameWidth);
+  this.collision(obstacles);
+};
 
 
 
@@ -159,6 +178,7 @@ Game.initialize = function() {
   this.frameWidth = 800;
   this.initCar(this.frameHeight, this.frameWidth);
   this.initRoad();
+  this.score = 0;
   
   //numero de ciclos rodados do jogo
   this.cycles = 0;  
@@ -172,15 +192,19 @@ Game.draw = function() {
   this.drawCar(this.carContext, this.cycles);
 
   this.drawRoad(this.roadContext);
+
+  document.getElementById("score").innerHTML = Math.ceil(this.score / 20);
 };
 
 
 Game.update = function() {
   this.cycles ++;
+  this.score ++;
 
-  this.moveCar(
+  this.updateCar(
     this.frameHeight,
-    this.frameWidth);
+    this.frameWidth,
+    this.obstacles);
 
   this.updateRoad(this.cycles, this.frameHeight, this.frameWidth);
 };
