@@ -324,7 +324,6 @@ window.cancelRequestAnimFrame = ( function() {
         window.msCancelRequestAnimationFrame        ||
         clearTimeout
 } )();
-var animationIds = [];
 Game.finalize = function(end){
   if(end){
     var previousScore = localStorage.highscore || 0;
@@ -336,10 +335,6 @@ Game.finalize = function(end){
     document.querySelector(".score-value-end").innerHTML = Math.ceil(this.score);
     document.querySelector('.highscore').innerHTML = localStorage.highscore;
     document.getElementById('end-card').className = "show";
-    for(var i = 0; i < animationIds.length; i++){
-      window.cancelRequestAnimFrame(animationIds[i]);
-    }
-    animationIds = [];
   }
   
 };
@@ -371,32 +366,29 @@ Game.run = (function() {
       onEachFrame = function(cb) {
         var _cb = function() { 
           cb(); 
-          return webkitRequestAnimationFrame(_cb); 
+          webkitRequestAnimationFrame(_cb); 
         }
-        return _cb();
+        _cb();
       };
     }
     else if (window.mozRequestAnimationFrame) {
       onEachFrame = function(cb) {
         var _cb = function() { 
           cb(); 
-          return mozRequestAnimationFrame(_cb); 
+          mozRequestAnimationFrame(_cb); 
         }
-        return _cb();
+        _cb();
       };
     }
     else {
       onEachFrame = function(cb) {
-        return setInterval(cb, 1000 / 60);
+        setInterval(cb, 1000 / 60);
       }
     }
 
     window.onEachFrame = onEachFrame;
 })();
-var animationId = window.onEachFrame(Game.run);
-animationIds.push(animationId);
+window.onEachFrame(Game.run);
 document.getElementById("reset-button").addEventListener("click", function(){
-  animationId = window.onEachFrame(Game.run);
-  animationIds.push(animationId);
-  Game.initialize();
+  location.reload();
 });
