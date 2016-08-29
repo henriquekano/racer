@@ -9,6 +9,9 @@
                 left: 0px;
                 background: transparent;
             }
+            #animation-canvas {
+                z-index: 3;
+            }
             #car-canvas {
                 z-index: 2;
             }
@@ -31,7 +34,7 @@
                 position: absolute;
                 top: 200px;
                 left: 300px;
-                z-index: 3;
+                z-index: 4;
                 background-color: white;
             }
         </style>
@@ -52,6 +55,9 @@
                 <button id="reset-button">RESET</button>
             </div>
         </div>
+        <canvas id="animation-canvas" width="800" height="600" style="border:1px solid #d3d3d3;"> 
+            Your browser does not support the HTML5 canvas tag.
+        </canvas>
         <canvas id="car-canvas" width="800" height="600" style="border:1px solid #d3d3d3;"> 
             Your browser does not support the HTML5 canvas tag.
         </canvas>

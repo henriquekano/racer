@@ -5,28 +5,66 @@ function bind(scope, fn) {
     };
 };
 
-var CollisionDetector = {
-  collisionDetect: function(rect1, rect2){
-    var xCollision;
-    if(rect1.x >= rect2.x ){
-      //rect1 esta a direita do obs
-      xCollision = rect1.x <= rect2.x + rect2.width;
-    }else if(rect1.x <= rect2.x ){
-      //rect1 a esquerda do obs
-      xCollision = rect1.x + rect1.width >= rect2.x;
+var Animator = {
+  animatorInit: function(){
+    this.explosion = {
+      image: new Image(),
+      spriteWidth: 118.2,
+      spriteHeight: 118,
+      frames: 5,
+      done: false
     }
-    var yCollision;
-    if(rect1.y >= rect2.y){
-      //rect1 abaixo do obs
-      yCollision = rect1.y <= rect2.y + rect2.height
-    }else if(rect1.y <= rect2.y){
-      yCollision = rect1.y + rect1.height >= rect2.y;
-    }
+    this.explosion.image.src = 'explosion.png';
+  },
+  explode: function(object, animationContext){
+    var objectCenterX = (object.x + object.width) / 2;
+    var objectCenterY = (object.y + object.height) / 2;
 
-    return xCollision && yCollision;
+    var drawExplosion = function(image, xCut, yCut, width, height, canvasX, canvasY, finalWidth, finalHeight){
+      animationContext.drawImage(
+        image, //img
+        xCut, yCut, //x, y de corte
+        width, height, //largura e altura da imagem
+        canvasX, canvasY, //x e y do canvas
+        finalWidth, finalHeight)//largura e altura final
+    };
+      
+    if(!this.explosion.done){
+      for(var i = 0; i < this.explosion.frames; i++){
+        var timeSpan = i === 0 ? 20 : 50;
+        setTimeout(drawExplosion, timeSpan * (i + 1), this.explosion.image, //img
+          i * this.explosion.spriteWidth, 0, //x, y de corte
+          this.explosion.spriteWidth, this.explosion.spriteHeight, //largura e altura da imagem
+          object.x, object.y, //x e y do canvas
+          this.explosion.spriteWidth, this.explosion.spriteHeight);
+      }
+    }
     
+  
   }
 };
+var CollisionDetector = Object.create(Animator);
+CollisionDetector.collisionDetect = function(rect1, rect2){
+  var xCollision;
+  if(rect1.x >= rect2.x ){
+    //rect1 esta a direita do obs
+    xCollision = rect1.x <= rect2.x + rect2.width;
+  }else if(rect1.x <= rect2.x ){
+    //rect1 a esquerda do obs
+    xCollision = rect1.x + rect1.width >= rect2.x;
+  }
+  var yCollision;
+  if(rect1.y >= rect2.y){
+    //rect1 abaixo do obs
+    yCollision = rect1.y <= rect2.y + rect2.height
+  }else if(rect1.y <= rect2.y){
+    yCollision = rect1.y + rect1.height >= rect2.y;
+  }
+
+  return xCollision && yCollision;
+  
+};
+
 var ObstacleFactory = Object.create(CollisionDetector);
 ObstacleFactory.initObstacleFactory = function(){
   this.hole = {
@@ -156,6 +194,7 @@ Road.drawRoad = function(obstaclesContext, backgroundContext, frameHeight){
 
 var Car = Object.create(Road);
 Car.initCar = function(frameHeight, frameWidth){
+  this.animatorInit();
   this.pressedKeys = {
     left: false,
     up: false,
@@ -276,6 +315,7 @@ Game.initialize = function() {
   this.carContext = document.getElementById("car-canvas").getContext("2d");
   this.obstaclesContext = document.getElementById("obstacles-canvas").getContext("2d");
   this.roadContext = document.getElementById("road-canvas").getContext("2d");
+  this.animationContext = document.getElementById("animation-canvas").getContext("2d");
 
   this.frameHeight = 600;
   this.frameWidth = 800;
@@ -292,6 +332,7 @@ Game.draw = function() {
   this.carContext.clearRect(0, 0, this.frameWidth, this.frameHeight);
   this.obstaclesContext.clearRect(0, 0, this.frameWidth, this.frameHeight);
   this.roadContext.clearRect(0, 0, this.frameWidth, this.frameHeight);
+  this.animationContext.clearRect(0, 0, this.frameWidth, this.frameHeight);
 
   this.drawCar(this.carContext, this.cycles);
   this.drawRoad(this.obstaclesContext, this.roadContext, this.frameHeight);
@@ -335,6 +376,7 @@ Game.finalize = function(end){
     document.querySelector(".score-value-end").innerHTML = Math.ceil(this.score);
     document.querySelector('.highscore').innerHTML = localStorage.highscore;
     document.getElementById('end-card').className = "show";
+    this.explode(this, this.animationContext, this.cycles);
   }
   
 };
