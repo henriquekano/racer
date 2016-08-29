@@ -79,9 +79,10 @@ ObstacleFactory.initObstacleFactory = function(){
   this.hole.image.src = 'hole.png';
 
   this.otherCar = {
-    width: 93,
+    width: 95.5,
     height: 141,
     velocity: 5,
+    frames: 4,
     sideEffect: function(scoreObject){
       scoreObject.carStatus.destroyed = true;
     }
@@ -179,16 +180,23 @@ Road.updateRoad = function(cycles, frameHeight, frameWidth){
     this.obstacles.push(newObs);
   }
 };
-Road.drawRoad = function(obstaclesContext, backgroundContext, frameHeight){
+Road.drawRoad = function(obstaclesContext, backgroundContext, frameHeight, cycles){
 
   backgroundContext.drawImage(this.background.image, this.background.x, this.background.y);
   backgroundContext.drawImage(this.background.image, this.background.x, this.background.y - this.background.height);
 
   for(var i = 0; i < this.obstacles.length; i++){
     var obs = this.obstacles[i];
-    obstaclesContext.drawImage(
-      obs.image, obs.x, obs.y, obs.width, obs.height
-    );
+    if(obs.frames){
+      obstaclesContext.drawImage(
+        obs.image, (Math.ceil(cycles) % obs.frames) * obs.width, 0, obs.width, obs.height, obs.x, obs.y, obs.width, obs.height
+      );
+    }else{
+      obstaclesContext.drawImage(
+        obs.image, obs.x, obs.y, obs.width, obs.height
+      );
+    }
+    
   }
 };
 
@@ -335,7 +343,7 @@ Game.draw = function() {
   this.animationContext.clearRect(0, 0, this.frameWidth, this.frameHeight);
 
   this.drawCar(this.carContext, this.cycles);
-  this.drawRoad(this.obstaclesContext, this.roadContext, this.frameHeight);
+  this.drawRoad(this.obstaclesContext, this.roadContext, this.frameHeight, this.cycles);
 
   document.querySelector(".score-value").innerHTML = Math.ceil(this.score);
 };
