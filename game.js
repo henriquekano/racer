@@ -20,7 +20,8 @@ var Animator = {
     var objectCenterX = (object.x + object.width) / 2;
     var objectCenterY = (object.y + object.height) / 2;
 
-    var drawExplosion = function(image, xCut, yCut, width, height, canvasX, canvasY, finalWidth, finalHeight){
+    var drawExplosion = function(animationContext, frameWidth, frameHeight, image, xCut, yCut, width, height, canvasX, canvasY, finalWidth, finalHeight){
+      animationContext.clearRect(0, 0, frameWidth, frameHeight);
       animationContext.drawImage(
         image, //img
         xCut, yCut, //x, y de corte
@@ -31,8 +32,9 @@ var Animator = {
       
     if(!this.explosion.done){
       for(var i = 0; i < this.explosion.frames; i++){
-        var timeSpan = i === 0 ? 20 : 50;
-        setTimeout(drawExplosion, timeSpan * (i + 1), this.explosion.image, //img
+        var timeSpan = (i === 0 ? 50 : 100);
+        setTimeout(drawExplosion, timeSpan * (i + 1), animationContext, this.frameWidth, this.frameHeight,
+          this.explosion.image, //img
           i * this.explosion.spriteWidth, 0, //x, y de corte
           this.explosion.spriteWidth, this.explosion.spriteHeight, //largura e altura da imagem
           object.x, object.y, //x e y do canvas
@@ -43,6 +45,7 @@ var Animator = {
   
   }
 };
+
 var CollisionDetector = Object.create(Animator);
 CollisionDetector.collisionDetect = function(rect1, rect2){
   var xCollision;
@@ -62,7 +65,6 @@ CollisionDetector.collisionDetect = function(rect1, rect2){
   }
 
   return xCollision && yCollision;
-  
 };
 
 var ObstacleFactory = Object.create(CollisionDetector);
@@ -71,6 +73,7 @@ ObstacleFactory.initObstacleFactory = function(){
     width: 75,
     velocity: 0,
     height: 75,
+    zIndex: 0,
     sideEffect: function(scoreObject){
       scoreObject.score -= 1;
     }
@@ -80,9 +83,10 @@ ObstacleFactory.initObstacleFactory = function(){
 
   this.otherCar = {
     width: 95.5,
-    height: 141,
+    height: 100,
     velocity: 5,
     frames: 4,
+    zIndex: 1,
     sideEffect: function(scoreObject){
       scoreObject.carStatus.destroyed = true;
     }
@@ -94,6 +98,7 @@ ObstacleFactory.initObstacleFactory = function(){
     width: 80,
     height: 80,
     velocity: 0,
+    zIndex: 0,
     sideEffect: function(scoreObject){
       scoreObject.carStatus.oilSlide = true;
     }
@@ -105,11 +110,11 @@ ObstacleFactory.createObstacle = function(lane1MiddleX, lane2MiddleX, lane3Middl
   var randomObstacle = Math.floor((Math.random() * 3) + 1);
   var obstacle;
   if(randomObstacle === 1){
-    obstacle = Object.create(this.hole);
+    obstacle = Object.create(this.oilSpill);
   }else if(randomObstacle === 2){
     obstacle = Object.create(this.otherCar);
   }else if(randomObstacle === 3){
-    obstacle = Object.create(this.oilSpill);
+    obstacle = Object.create(this.hole);
   }
 
   var randomLane = Math.floor((Math.random() * 5) + 1);
@@ -127,7 +132,6 @@ ObstacleFactory.createObstacle = function(lane1MiddleX, lane2MiddleX, lane3Middl
   
   obstacle.y = -obstacle.height;
   return obstacle;
-  
 };
 
 var Road = Object.create(ObstacleFactory);
@@ -136,7 +140,6 @@ Road.initRoad = function(){
   this.velocity = 10;
   this.velocityAdd = 1;
   this.obstacles = [];
-  this.initObstacleFactory();
   this.background = {
     image: new Image(),
     x: 0,
@@ -175,24 +178,37 @@ Road.updateRoad = function(cycles, frameHeight, frameWidth){
     }
   }
   //summon um se precisar obstaculo
-  if(cycles % 30 == 0){
+
+  //quantidade de ciclos para que obstaculos sejam summonados
+  //sem que eles fiquem sobrepostos (pelo menos inicialmente)
+  var summonWhen = Math.ceil(1 / this.velocity * (this.otherCar.height) + this.otherCar.velocity) + 5;
+  
+  //limitar a 4 objetos garante que sempre existira uma lane livre
+  if(cycles % summonWhen == 0 && this.obstacles.length < 4){
     var newObs = this.createObstacle(this.lane1MiddleX, this.lane2MiddleX, this.lane3MiddleX, this.lane4MiddleX, this.lane5MiddleX);
     this.obstacles.push(newObs);
   }
 };
-Road.drawRoad = function(obstaclesContext, backgroundContext, frameHeight, cycles){
+Road.drawRoad = function(lowerContext, higherContext, backgroundContext, frameHeight, cycles){
 
   backgroundContext.drawImage(this.background.image, this.background.x, this.background.y);
   backgroundContext.drawImage(this.background.image, this.background.x, this.background.y - this.background.height);
 
   for(var i = 0; i < this.obstacles.length; i++){
     var obs = this.obstacles[i];
+    var contextToUse;
+    if(obs.zIndex === 0){
+      contextToUse = lowerContext;
+    }else{
+      contextToUse = higherContext;
+    }
+
     if(obs.frames){
-      obstaclesContext.drawImage(
+      contextToUse.drawImage(
         obs.image, (Math.ceil(cycles) % obs.frames) * obs.width, 0, obs.width, obs.height, obs.x, obs.y, obs.width, obs.height
       );
     }else{
-      obstaclesContext.drawImage(
+      contextToUse.drawImage(
         obs.image, obs.x, obs.y, obs.width, obs.height
       );
     }
@@ -200,9 +216,10 @@ Road.drawRoad = function(obstaclesContext, backgroundContext, frameHeight, cycle
   }
 };
 
+//Trying some OLOO style
 var Car = Object.create(Road);
 Car.initCar = function(frameHeight, frameWidth){
-  this.animatorInit();
+
   this.pressedKeys = {
     left: false,
     up: false,
@@ -294,7 +311,6 @@ Car.moveCar = function(frameHeight, frameWidth){
   }else{
     this.y = newY;
   }
-  
 };
 Car.collision = function(obstacles){
   for(var i = 0; i < obstacles.length; i++){
@@ -304,7 +320,6 @@ Car.collision = function(obstacles){
       obstacle.sideEffect(this);
     }
   }
-  
 };
 Car.updateCar = function(frameHeight, frameWidth, obstacles){
   this.moveCar(frameHeight, frameWidth);
@@ -328,7 +343,11 @@ Game.initialize = function() {
   this.frameHeight = 600;
   this.frameWidth = 800;
   this.initCar(this.frameHeight, this.frameWidth);
+  this.initObstacleFactory();
+
   this.initRoad();
+  this.animatorInit();
+
   this.score = 0;
   
   //numero de ciclos rodados do jogo
@@ -340,10 +359,9 @@ Game.draw = function() {
   this.carContext.clearRect(0, 0, this.frameWidth, this.frameHeight);
   this.obstaclesContext.clearRect(0, 0, this.frameWidth, this.frameHeight);
   this.roadContext.clearRect(0, 0, this.frameWidth, this.frameHeight);
-  this.animationContext.clearRect(0, 0, this.frameWidth, this.frameHeight);
 
   this.drawCar(this.carContext, this.cycles);
-  this.drawRoad(this.obstaclesContext, this.roadContext, this.frameHeight, this.cycles);
+  this.drawRoad(this.obstaclesContext, this.carContext, this.roadContext, this.frameHeight, this.cycles);
 
   document.querySelector(".score-value").innerHTML = Math.ceil(this.score);
 };
@@ -365,14 +383,6 @@ Game.end = function(){
   return this.carStatus.destroyed === true;
 };
 
-window.cancelRequestAnimFrame = ( function() {
-    return window.cancelAnimationFrame          ||
-        window.webkitCancelRequestAnimationFrame    ||
-        window.mozCancelRequestAnimationFrame       ||
-        window.oCancelRequestAnimationFrame     ||
-        window.msCancelRequestAnimationFrame        ||
-        clearTimeout
-} )();
 Game.finalize = function(end){
   if(end){
     var previousScore = localStorage.highscore || 0;
